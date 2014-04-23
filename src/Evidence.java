@@ -4,6 +4,8 @@ public class Evidence {
 	ArrayList<Variable> varRef;
 	ArrayList<Integer> observedData; // -1 means missing data
 	ArrayList<Variable> missingVariables;
+	
+	boolean isFullyObserved = false;
 
 	public Evidence(ArrayList<Variable> vars) {
 		varRef = vars;
@@ -16,12 +18,14 @@ public class Evidence {
 
 	public int setData(String[] tokens) {
 		int observedCount = 0;
+		isFullyObserved = true;
 
 		for (int i = 0; i < tokens.length; i++) {
 			String token = tokens[i];
 			if (token.equals("?")) {
 				observedData.set(i, -1);
 				missingVariables.add(varRef.get(i));
+				isFullyObserved = false;
 			} else {
 				observedData.set(i, Integer.valueOf(token));
 				observedCount++;
@@ -83,5 +87,18 @@ public class Evidence {
 		}
 		
 		return false;
+	}
+	
+	// set ref variables to the corresponding value of observedData
+	public boolean makeEvidenceBeTrue() {
+		if(!isFullyObserved) {
+			return false;
+		}
+		
+		for (int i = 0; i < varRef.size(); i++) {
+			varRef.get(i).setSoftEvidence(observedData.get(i));
+		}
+		
+		return true;
 	}
 }
