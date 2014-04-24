@@ -65,7 +65,7 @@ public class Evidence {
 
 		for (int i = 0; i < vals.length; i++) {
 			Variable var = vars.get(i);
-			if (vals[i] != varRef.get(var.index).value) {
+			if (vals[i] != observedData.get(var.index)) {
 				return false;
 			}
 		}
@@ -81,12 +81,12 @@ public class Evidence {
 		
 		for (int i = offset; i < length; i++) {
 			Variable var = vars.get(i);
-			if (vals[i] != varRef.get(var.index).value) {
+			if (vals[i] != observedData.get(var.index) && -1 != observedData.get(var.index)) {
 				return false;
 			}
 		}
 		
-		return false;
+		return true;
 	}
 	
 	// set ref variables to the corresponding value of observedData
