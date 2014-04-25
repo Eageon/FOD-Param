@@ -1,9 +1,10 @@
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class Evidence {
 	ArrayList<Variable> varRef;
 	ArrayList<Integer> observedData; // -1 means missing data
-	ArrayList<Variable> missingVariables;
+	LinkedList<Variable> missingVariables;
 	
 	boolean isFullyObserved = false;
 
@@ -14,6 +15,8 @@ public class Evidence {
 		for (int i = 0; i < vars.size(); i++) {
 			observedData.add(-1);
 		}
+		
+		missingVariables = new LinkedList<>();
 	}
 
 	public int setData(String[] tokens) {
@@ -48,12 +51,23 @@ public class Evidence {
 		if (vars.size() != vals.length) {
 			return true;
 		}
-
-		for (int i = 0; i < vals.length; i++) {
-			if (varRef.contains(vars.get(i)) && vars.get(i).value != vals[i]) {
+		
+		for (int i = 0; i < vars.size(); i++) {
+			Variable var = vars.get(i);
+//			if(observedData.get(var.index) != vals[i] && observedData.get(var.index) != -1) {
+//				return true;
+//			}
+			
+			if(var.isEvidence && var.value != vals[i]) {
 				return true;
 			}
 		}
+
+		/*for (int i = 0; i < vals.length; i++) {
+			if (varRef.contains(vars.get(i)) && vars.get(i).value != vals[i]) {
+				return true;
+			}
+		}*/
 
 		return false;
 	}
@@ -65,7 +79,7 @@ public class Evidence {
 
 		for (int i = 0; i < vals.length; i++) {
 			Variable var = vars.get(i);
-			if (vals[i] != observedData.get(var.index)) {
+			if (vals[i] != observedData.get(var.index) && -1 != observedData.get(var.index)) {
 				return false;
 			}
 		}
