@@ -5,10 +5,10 @@ import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 
-@SuppressWarnings("unused")
 public class FODParam {
 
 	GraphicalModel model = null;
+	GraphicalModel origModel = null;
 	LinkedList<Evidence> evidenceSet = null;
 	int numEvidence = 0;
 
@@ -64,10 +64,6 @@ public class FODParam {
 			}
 
 			logLikelihood -= entrophy;
-
-			if (entrophy < 10000) {
-				System.out.println(entrophy);
-			}
 		}
 
 		// logLikelihood *= evidenceSet.size();
@@ -78,6 +74,77 @@ public class FODParam {
 	public double logLikelihood(LinkedList<Evidence> dataSet) {
 
 		return logLikelihood;
+	}
+
+	public double testLikelihoodOnFileAndCompare(String test_data) {
+		double logLikelihoodDiff = 0.0;
+
+		try {
+			BufferedReader reader = new BufferedReader(
+					new FileReader(test_data));
+			String preamble = reader.readLine();
+			String[] tokens = preamble.split(" ");
+
+			if (model.variables.size() != Integer.valueOf(tokens[0])) {
+				System.out
+						.println("uai and test data don't match on number of variables");
+				System.exit(0);
+			}
+
+			int numData = Integer.valueOf(tokens[1]);
+			logLikelihoodDiff = testLikelihoodOnDataAndCompare(reader);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return logLikelihoodDiff;
+	}
+
+	public double testLikelihoodOnDataAndCompare(BufferedReader reader) {
+		String line = null;
+		double logLikelihoodDiff = 0.0;
+
+		try {
+			while (null != (line = reader.readLine())) {
+				String[] values = line.split(" ");
+
+				Evidence evidence = new Evidence(model.variables);
+				Evidence origEvidence = new Evidence(origModel.variables);
+				evidence.setData(values);
+				origEvidence.setData(values);
+				evidence.makeEvidenceBeTrue();
+				origEvidence.makeEvidenceBeTrue();
+
+				double result = 1.0;
+				for (Factor factor : model.factors) {
+					result *= factor.underlyProbability();
+				}
+
+				if (result == 0.0) {
+					continue;
+				}
+
+				double origResult = 1.0;
+
+				for (Factor factor : origModel.factors) {
+					origResult *= factor.underlyProbability();
+				}
+
+				if (origResult == 0.0) {
+					continue;
+				}
+
+				double LLo = Math.log(origResult) / Math.log(2);
+				double LLl = Math.log(result) / Math.log(2);
+				logLikelihoodDiff += Math.abs(LLo - LLl);
+				
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return logLikelihoodDiff;
 	}
 
 	public double testLikelihoodOnFile(String test_data) {
@@ -243,19 +310,20 @@ public class FODParam {
 		String output_uai = args[3];
 
 		GraphicalModel model = new GraphicalModel(input_uai, false);
+		GraphicalModel origModel = new GraphicalModel(input_uai, true);
 		model.initTabelWithoutSettingValue();
 		FODParam fodParam = new FODParam(model);
 
 		fodParam.readTrainingDataOnFile(training_data);
 		fodParam.runFODParam();
-		System.out.println(fodParam.logLikelihood);
-
-		double logLikelihood = fodParam.testLikelihoodOnFile(test_data);
+		
+		fodParam.origModel = origModel;
+		double logLikelihoodDiff = fodParam.testLikelihoodOnFileAndCompare(test_data);
 
 		// FileOutputStream output = new FileOutputStream(output_uai);
-		System.out.println("____________________________");
-		System.out.println("log likelihood difference = " + logLikelihood);
-		System.out.println("____________________________");
+		System.out.println("______________________________________________________");
+		System.out.println("log likelihood difference = " + logLikelihoodDiff);
+		System.out.println("______________________________________________________");
 
 		fodParam.dumpNetworkAsUAI(output_uai);
 	}

@@ -71,6 +71,15 @@ public class Evidence {
 
 		return false;
 	}
+	
+	public boolean isCollision(Variable var) {
+		for (Variable missing : missingVariables) {
+			if(missing == var) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	public boolean isConsistentWith(ArrayList<Variable> vars, int[] vals) {
 		if (vals.length != vars.size()) {
@@ -98,6 +107,14 @@ public class Evidence {
 			if (vals[i] != observedData.get(var.index) && -1 != observedData.get(var.index)) {
 				return false;
 			}
+		}
+		
+		return true;
+	}
+	
+	public boolean isConsistentWith(Variable var, int val) {
+		if (val != observedData.get(var.index) && -1 != observedData.get(var.index)) {
+			return false;
 		}
 		
 		return true;
